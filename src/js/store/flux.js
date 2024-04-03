@@ -2,38 +2,47 @@ const getState = ({ getStore, getActions, setStore }) => {
   return {
     store: {
       people: [],
+      infopeople: [],
 
       starships: [],
+      infostarships: [],
 
       vehicles: [],
+      infovehicles: [],
 
       planets: [],
+      infoplanets: [],
 
       species: [],
+      infospecies: [],
 
       films: [],
-
-      info: [],
+      infofilms: [],
     },
     actions: {
       loadSpecificData: async (type, id) => {
+        const adjustedType = type === "characters" ? "people" : type;
+        const store = getStore();
+
+        if (!store[adjustedType] || store[adjustedType].length === 0) {
+          await getActions().loadAllData();
+        }
+
+        const object = store[adjustedType].find((item) => item.uid === id);
+        if (!object) {
+          console.log("Objeto no encontrado en el store.");
+          return;
+        }
+
         try {
-          const response = await fetch(
-            `https://www.swapi.tech/api/${type}/${id}`
-          );
+          const response = await fetch(object.url);
           if (!response.ok) {
             throw new Error(`Error fetching data: ${response.statusText}`);
           }
-
           const data = await response.json();
-          const newData = data.result.properties;
-
-          setStore((prevState) => ({
-            ...prevState,
-            info: newData,
-          }));
+          setStore({ info: data.result.properties });
         } catch (error) {
-          console.error(error.message);
+          console.log("Error loading specific data:", error.message);
         }
       },
 
@@ -50,9 +59,9 @@ const getState = ({ getStore, getActions, setStore }) => {
             "films",
           ];
 
-          const urlsToFetch = types
-            .filter((type) => store[type].length === 0)
-            .map((type) => `https://www.swapi.tech/api/${type}/`);
+          const urlsToFetch = types.map(
+            (type) => `https://www.swapi.tech/api/${type}/`
+          );
 
           if (urlsToFetch.length === 0) {
             console.log("Todos los datos ya están cargados.");
@@ -87,3 +96,4 @@ const getState = ({ getStore, getActions, setStore }) => {
 };
 
 export default getState;
+length;

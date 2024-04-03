@@ -18,29 +18,41 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       films: [],
       infofilms: [],
+
+      info: [],
     },
     actions: {
       loadSpecificData: async (type, id) => {
         const adjustedType = type === "characters" ? "people" : type;
         const store = getStore();
 
-        if (!store[adjustedType] || store[adjustedType].length === 0) {
-          await getActions().loadAllData();
-        }
-
-        const object = store[adjustedType].find((item) => item.uid === id);
-        if (!object) {
-          console.log("Objeto no encontrado en el store.");
-          return;
-        }
+        await getActions().loadAllData();
 
         try {
+          if (store.info && store.info.some((item) => item.uid === id)) {
+            console.log(
+              `Datos específicos para ${adjustedType} con ID ${id} ya cargados.`
+            );
+            return;
+          }
+
+          const object = store[adjustedType].find((item) => item.uid === id);
+          if (!object) {
+            console.log("Objeto no encontrado en el store.");
+            return;
+          }
+
           const response = await fetch(object.url);
           if (!response.ok) {
             throw new Error(`Error fetching data: ${response.statusText}`);
           }
           const data = await response.json();
-          setStore({ info: data.result.properties });
+          const newData = data.result.properties;
+
+          setStore({
+            ...store,
+            [`info${adjustedType}`]: [...(store.info || []), newData], // Crea o actualiza la clave con los datos específicos.
+          });
         } catch (error) {
           console.log("Error loading specific data:", error.message);
         }
@@ -96,4 +108,3 @@ const getState = ({ getStore, getActions, setStore }) => {
 };
 
 export default getState;
-length;
